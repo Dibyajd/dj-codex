@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LadderStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum Role {
+  ADMIN
+  HRBP
+  VIEWER
+}
+
+model User {
+  id            String      @id @default(cuid())
+  name          String
+  email         String      @unique
+  hashedPassword String
+  role          Role        @default(HRBP)
+  organizationId String?
+  organization  Organization? @relation(fields: [organizationId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  auditLogs     AuditLog[]
+}
+
+model Organization {
+  id                   String       @id @default(cuid())
+  name                 String
+  industryPrimary      String
+  industrySecondary    String?
+  revenueBand          String
+  growthStage          String
+  employeeSize         Int
+  marketGeography      String
+  businessModel        String
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  users                User[]
+  ladders              LadderVersion[]
+  comparatorGroupLinks ComparatorGroup[] @relation("OrgComparator")
+}
+
+model ComparatorCompany {
+  id                String            @id @default(cuid())
+  name              String
+  industry          String
+  revenueBand       String
+  employeeRange     String
+  growthStage       String
+  geography         String
+  businessModel     String
+  source            String
+  confidenceWeight  Float
+  createdAt         DateTime          @default(now())
+  comparatorGroups  ComparatorGroup[]
+}
+
+model ComparatorGroup {
+  id           String             @id @default(cuid())
+  name         String
+  organizationId String
+  organization Organization       @relation("OrgComparator", fields: [organizationId], references: [id])
+  companies    ComparatorCompany[]
+  createdAt    DateTime           @default(now())
+}
+
+model LadderVersion {
+  id                 String             @id @default(cuid())
+  organizationId     String
+  organization       Organization       @relation(fields: [organizationId], references: [id])
+  function           String
+  roleFamily         String
+  specialization     String?
+  icStructure        String
+  managementStructure String
+  directorMapping    String
+  headOfFunctionDefinition String
+  trackType          String
+  customLevelNaming  Json
+  benchmarkConfidence Float
+  similarityScore    Float
+  dataCoverage       Float
+  insights           Json
+  executiveSummary   String
+  status             LadderStatus       @default(DRAFT)
+  versionNumber      Int
+  createdById        String
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  levels             LadderLevel[]
+  provenance         DataProvenance[]
+  auditEntries       AuditLog[]
+
+  @@index([organizationId, createdAt])
+}
+
+model LadderLevel {
+  id                          String        @id @default(cuid())
+  ladderVersionId             String
+  ladderVersion               LadderVersion @relation(fields: [ladderVersionId], references: [id], onDelete: Cascade)
+  levelOrder                  Int
+  levelCode                   String
+  marketAlignedTitle          String
+  roleScopeVsMedian           String
+  responsibilities            Json
+  functionalCompetencies      Json
+  leadershipBehavioralSkills  Json
+  businessImpact              String
+  decisionAuthority           String
+  technologyTools             Json
+  promotionBenchmarks         Json
+  experienceRangeYears        String
+  internalExternalCompetitive String
+  deviationNotes              String
+  riskFlags                   Json
+
+  @@unique([ladderVersionId, levelOrder])
+}
+
+model DataProvenance {
+  id              String        @id @default(cuid())
+  ladderVersionId String
+  ladderVersion   LadderVersion @relation(fields: [ladderVersionId], references: [id], onDelete: Cascade)
+  sourceType      String
+  sourceName      String
+  sourceUrl       String?
+  relevanceScore  Float
+  excerpt         String
+  createdAt       DateTime      @default(now())
+}
+
+model AuditLog {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  action        String
+  resourceType  String
+  resourceId    String
+  metadata      Json
+  ladderVersionId String?
+  ladderVersion LadderVersion? @relation(fields: [ladderVersionId], references: [id])
+  timestamp     DateTime      @default(now())
+
+  @@index([resourceType, resourceId])
+}

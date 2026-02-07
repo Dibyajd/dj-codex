@@ -1,0 +1,47 @@
+{
+  "name": "career-ladder-intelligence",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test:snake": "tsx --test lib/snake/game.test.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "samples:generate": "tsx scripts/generate-samples.ts",
+    "setup": "npm run prisma:generate && npm run prisma:migrate && npm run prisma:seed",
+    "dev:py": "uvicorn python_service.main:app --reload --port 8001",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:py\""
+  },
+  "dependencies": {
+    "@prisma/client": "^6.3.1",
+    "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.1",
+    "dayjs": "^1.11.13",
+    "jspdf": "^2.5.2",
+    "lucide-react": "^0.475.0",
+    "next": "15.1.7",
+    "openai": "^4.86.1",
+    "pdfkit": "^0.15.1",
+    "pptxgenjs": "^3.12.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "@types/pdfkit": "^0.14.0",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.2",
+    "postcss": "^8.5.2",
+    "prisma": "^6.3.1",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

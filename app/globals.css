@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-bg text-ink font-body;
+  background-image: radial-gradient(circle at 8% 12%, rgba(14, 110, 99, 0.14), transparent 45%),
+    radial-gradient(circle at 95% 82%, rgba(201, 106, 42, 0.14), transparent 35%),
+    linear-gradient(180deg, #f8f4ec 0%, #f4efe4 100%);
+  min-height: 100vh;
+}
+
+.panel {
+  @apply rounded-2xl border border-[#ddd1bd] bg-white/80 backdrop-blur p-6 shadow-[0_12px_30px_rgba(26,26,26,0.08)];
+}
+
+.label {
+  @apply text-xs uppercase tracking-[0.16em] text-[#6b6152] font-semibold;
+}
