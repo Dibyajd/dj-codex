@@ -122,3 +122,4 @@ This project includes a minimal MVP flow at `/mvp`.
 ### Key files
 - Frontend page: `app/mvp/page.tsx`
 - Backend API: `app/api/mvp/generate-ladder/route.ts`
+# dj-codex
