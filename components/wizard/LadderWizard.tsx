@@ -4,7 +4,13 @@ import { type FormEvent, type MouseEvent, useMemo, useState } from "react";
 import { jsPDF } from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+
+type CompetencyProgression = {
+  competency: string;
+  proficiency: string;
+};
 
 type LadderLevel = {
   path?: "Individual" | "Managerial" | string;
@@ -14,6 +20,9 @@ type LadderLevel = {
   responsibilities: string[];
   skills: string[];
   typicalExperience: string;
+  competencyProgression?: CompetencyProgression[];
+  nextLevelReadiness?: string[];
+  learningPathways?: string[];
 };
 
 type LadderResponse = {
@@ -38,6 +47,92 @@ type LadderResponse = {
   };
 };
 
+const COMPANY_SIZE_OPTIONS = [
+  "1-50",
+  "51-200",
+  "201-500",
+  "501-1,000",
+  "1,001-5,000",
+  "5,001-10,000",
+  "10,000+"
+];
+
+const REVENUE_RANGE_OPTIONS = [
+  "< $10M",
+  "$10M-$50M",
+  "$50M-$100M",
+  "$100M-$500M",
+  "$500M-$1B",
+  "$1B-$5B",
+  "$5B+"
+];
+
+function FieldLabel({ text, helpId }: { text: string; helpId: string }) {
+  return (
+    <label className="label">
+      {text}
+      <a href={`#${helpId}`} className="ml-1 align-super text-[10px] font-bold text-accent underline" aria-label={`${text} guidance`}>
+        i
+      </a>
+    </label>
+  );
+}
+
+function LevelCard({ level }: { level: LadderLevel }) {
+  return (
+    <article className="rounded-xl border border-[#e1d6c4] bg-[#fdfaf5] p-4">
+      <h5 className="text-xl font-semibold">
+        {level.level} - {level.title}
+      </h5>
+      <p className="mt-2">{level.scope}</p>
+      <p className="mt-1 text-xs uppercase tracking-[0.06em] text-[#6a5f4f]">
+        Typical experience: {level.typicalExperience}
+      </p>
+      <p className="mt-2">
+        <span className="font-semibold">Responsibilities:</span> {level.responsibilities.join("; ")}
+      </p>
+      <p className="mt-1">
+        <span className="font-semibold">Skills:</span> {level.skills.join("; ")}
+      </p>
+
+      {level.competencyProgression?.length ? (
+        <div className="mt-3">
+          <p className="font-semibold">Competency Proficiency</p>
+          <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
+            {level.competencyProgression.map((item, idx) => (
+              <li key={`${item.competency}-${idx}`}>
+                {item.competency}: {item.proficiency}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {level.nextLevelReadiness?.length ? (
+        <div className="mt-3">
+          <p className="font-semibold">Readiness for Next Level</p>
+          <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
+            {level.nextLevelReadiness.map((item, idx) => (
+              <li key={`${item}-${idx}`}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {level.learningPathways?.length ? (
+        <div className="mt-3">
+          <p className="font-semibold">Learning Pathways</p>
+          <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
+            {level.learningPathways.map((item, idx) => (
+              <li key={`${item}-${idx}`}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
 export function LadderWizard() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -46,8 +141,8 @@ export function LadderWizard() {
 
   const [form, setForm] = useState({
     industry: "",
-    companySize: "",
-    revenueRange: "",
+    companySize: "201-500",
+    revenueRange: "$100M-$500M",
     functionName: "HR",
     role: "HR Business Partner",
     jobLevels: "Associate, Senior, Lead, Director",
@@ -170,7 +265,7 @@ export function LadderWizard() {
       const wrapped = rowValues.map((value, idx) => doc.splitTextToSize(value || "", columns[idx].width - 10));
       const rowHeight = Math.max(...wrapped.map((lines) => lines.length)) * 12 + 8;
 
-      ensureSpace(rowHeight + 30);
+      ensureSpace(rowHeight + 70);
       doc.setDrawColor(215, 206, 190);
       doc.setFillColor(rowIndex % 2 === 0 ? 255 : 250, rowIndex % 2 === 0 ? 255 : 249, rowIndex % 2 === 0 ? 255 : 245);
       doc.rect(margin, y, width, rowHeight, "FD");
@@ -186,14 +281,20 @@ export function LadderWizard() {
 
       doc.setTextColor(82, 74, 63);
       doc.setFontSize(9);
-      const responsibilities = doc.splitTextToSize(`Responsibilities: ${level.responsibilities.join("; ")}`, width - 12);
-      const skills = doc.splitTextToSize(`Skills: ${level.skills.join("; ")}`, width - 12);
-      const detailHeight = (responsibilities.length + skills.length) * 11 + 8;
-      ensureSpace(detailHeight);
-      doc.rect(margin, y, width, detailHeight);
-      doc.text(responsibilities, margin + 6, y + 12);
-      doc.text(skills, margin + 6, y + 12 + responsibilities.length * 11);
-      y += detailHeight + 6;
+      const details = [
+        `Responsibilities: ${level.responsibilities.join("; ")}`,
+        `Skills: ${level.skills.join("; ")}`,
+        `Competency Proficiency: ${(level.competencyProgression || []).map((c) => `${c.competency} (${c.proficiency})`).join("; ")}`,
+        `Readiness for Next Level: ${(level.nextLevelReadiness || []).join("; ")}`,
+        `Learning Pathways: ${(level.learningPathways || []).join("; ")}`
+      ];
+      for (const detail of details) {
+        const lines = doc.splitTextToSize(detail, width - 12);
+        ensureSpace(lines.length * 11 + 4);
+        doc.text(lines, margin + 6, y + 12);
+        y += lines.length * 11 + 2;
+      }
+      y += 4;
     };
 
     drawPageHeader();
@@ -223,29 +324,37 @@ export function LadderWizard() {
         {step === 1 ? (
           <form className="mt-5 grid gap-4 md:grid-cols-2" onSubmit={generate}>
             <div>
-              <label className="label">Industry</label>
+              <FieldLabel text="Industry" helpId="help-industry" />
               <Input value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} required />
             </div>
             <div>
-              <label className="label">Company Size</label>
-              <Input value={form.companySize} onChange={(e) => setForm({ ...form, companySize: e.target.value })} required />
+              <FieldLabel text="Company Size (Headcount)" helpId="help-company-size" />
+              <Select value={form.companySize} onChange={(e) => setForm({ ...form, companySize: e.target.value })}>
+                {COMPANY_SIZE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </Select>
             </div>
             <div>
-              <label className="label">Revenue Range</label>
-              <Input value={form.revenueRange} onChange={(e) => setForm({ ...form, revenueRange: e.target.value })} required />
+              <FieldLabel text="Revenue Range" helpId="help-revenue" />
+              <Select value={form.revenueRange} onChange={(e) => setForm({ ...form, revenueRange: e.target.value })}>
+                {REVENUE_RANGE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </Select>
             </div>
             <div>
-              <label className="label">Function</label>
+              <FieldLabel text="Function" helpId="help-function" />
               <Input value={form.functionName} onChange={(e) => setForm({ ...form, functionName: e.target.value })} required />
             </div>
             <div>
-              <label className="label">Role</label>
+              <FieldLabel text="Role" helpId="help-role" />
               <Input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} required />
             </div>
             <div>
               {form.dualPath === "Yes" ? (
                 <>
-                  <label className="label">Individual Track Job Levels (comma-separated)</label>
+                  <FieldLabel text="Individual Track Job Levels" helpId="help-individual-levels" />
                   <Input
                     value={form.individualTrackJobLevels}
                     onChange={(e) => setForm({ ...form, individualTrackJobLevels: e.target.value })}
@@ -254,14 +363,14 @@ export function LadderWizard() {
                 </>
               ) : (
                 <>
-                  <label className="label">Job Levels (comma-separated)</label>
+                  <FieldLabel text="Job Levels" helpId="help-job-levels" />
                   <Input value={form.jobLevels} onChange={(e) => setForm({ ...form, jobLevels: e.target.value })} required />
                 </>
               )}
             </div>
             {form.dualPath === "Yes" ? (
               <div>
-                <label className="label">Managerial Track Job Levels (comma-separated)</label>
+                <FieldLabel text="Managerial Track Job Levels" helpId="help-managerial-levels" />
                 <Input
                   value={form.managerialTrackJobLevels}
                   onChange={(e) => setForm({ ...form, managerialTrackJobLevels: e.target.value })}
@@ -270,40 +379,22 @@ export function LadderWizard() {
               </div>
             ) : null}
             <div>
-              <label className="label">Starting Job Level</label>
-              <Input
-                value={form.startingJobLevel}
-                onChange={(e) => setForm({ ...form, startingJobLevel: e.target.value })}
-                required
-              />
+              <FieldLabel text="Starting Job Level" helpId="help-start-level" />
+              <Input value={form.startingJobLevel} onChange={(e) => setForm({ ...form, startingJobLevel: e.target.value })} required />
             </div>
             <div>
-              <label className="label">Highest Job Level / Head of Role</label>
-              <Input
-                value={form.highestJobLevel}
-                onChange={(e) => setForm({ ...form, highestJobLevel: e.target.value })}
-                required
-              />
+              <FieldLabel text="Highest Job Level / Head of Role" helpId="help-highest-level" />
+              <Input value={form.highestJobLevel} onChange={(e) => setForm({ ...form, highestJobLevel: e.target.value })} required />
             </div>
             <div>
-              <label className="label">Dual Path (Individual + Managerial)</label>
+              <FieldLabel text="Dual Path (Individual + Managerial)" helpId="help-dual-path" />
               <div className="mt-2 flex items-center gap-5 rounded-xl border border-[#d7ccba] bg-white px-3 py-2">
                 <label className="inline-flex items-center gap-2 text-sm">
-                  <input
-                    type="radio"
-                    name="dualPath"
-                    checked={form.dualPath === "Yes"}
-                    onChange={() => setForm({ ...form, dualPath: "Yes" })}
-                  />
+                  <input type="radio" name="dualPath" checked={form.dualPath === "Yes"} onChange={() => setForm({ ...form, dualPath: "Yes" })} />
                   Yes
                 </label>
                 <label className="inline-flex items-center gap-2 text-sm">
-                  <input
-                    type="radio"
-                    name="dualPath"
-                    checked={form.dualPath === "No"}
-                    onChange={() => setForm({ ...form, dualPath: "No" })}
-                  />
+                  <input type="radio" name="dualPath" checked={form.dualPath === "No"} onChange={() => setForm({ ...form, dualPath: "No" })} />
                   No
                 </label>
               </div>
@@ -312,6 +403,23 @@ export function LadderWizard() {
             <div className="md:col-span-2 mt-2 flex items-center gap-3">
               <Button type="submit" disabled={loading}>{loading ? "Generating..." : "Generate Career Ladder"}</Button>
               {error ? <p className="text-sm text-red-600">{error}</p> : null}
+            </div>
+
+            <div className="md:col-span-2 rounded-xl border border-[#dfd2be] bg-[#fbf7ef] p-4 text-sm text-[#5f5446]">
+              <p className="mb-2 font-semibold">Input Guidance</p>
+              <ul className="space-y-1">
+                <li id="help-industry"><b>Industry:</b> Enter your company sector (for example, FinTech, SaaS, Healthcare).</li>
+                <li id="help-company-size"><b>Company Size:</b> Select current employee headcount band.</li>
+                <li id="help-revenue"><b>Revenue Range:</b> Select latest annual revenue band.</li>
+                <li id="help-function"><b>Function:</b> Enter business function where the ladder applies (for example, HR).</li>
+                <li id="help-role"><b>Role:</b> Enter one role family only (for example, HR Business Partner).</li>
+                <li id="help-job-levels"><b>Job Levels:</b> Comma-separated level names from entry to top level.</li>
+                <li id="help-individual-levels"><b>Individual Track Levels:</b> Comma-separated IC levels in order (for example, IC1, IC2, IC3).</li>
+                <li id="help-managerial-levels"><b>Managerial Track Levels:</b> Comma-separated manager levels in order (for example, M1, M2, M3).</li>
+                <li id="help-start-level"><b>Starting Job Level:</b> Lowest level in scope for this ladder.</li>
+                <li id="help-highest-level"><b>Highest Level / Head of Role:</b> Highest target level covered by this ladder.</li>
+                <li id="help-dual-path"><b>Dual Path:</b> Choose Yes for IC + managerial ladders, No for a single track.</li>
+              </ul>
             </div>
           </form>
         ) : null}
@@ -330,22 +438,22 @@ export function LadderWizard() {
               </div>
             ) : null}
 
-            {result?.ladder.benchmarkAssumptions?.length ? (
+            {result?.ladder.benchmarkedCompanies?.length ? (
               <div>
-                <h4 className="label">Benchmark Assumptions</h4>
+                <h4 className="label">Companies Benchmarked</h4>
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  {result.ladder.benchmarkAssumptions.map((item, idx) => (
+                  {result.ladder.benchmarkedCompanies.map((item, idx) => (
                     <li key={`${item}-${idx}`}>{item}</li>
                   ))}
                 </ul>
               </div>
             ) : null}
 
-            {result?.ladder.benchmarkedCompanies?.length ? (
+            {result?.ladder.benchmarkAssumptions?.length ? (
               <div>
-                <h4 className="label">Companies Benchmarked</h4>
+                <h4 className="label">Benchmark Assumptions</h4>
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  {result.ladder.benchmarkedCompanies.map((item, idx) => (
+                  {result.ladder.benchmarkAssumptions.map((item, idx) => (
                     <li key={`${item}-${idx}`}>{item}</li>
                   ))}
                 </ul>
@@ -360,21 +468,7 @@ export function LadderWizard() {
                     <h5 className="font-semibold text-[#3f372b]">Individual Track</h5>
                     <div className="mt-2 space-y-3">
                       {groupedLevels.individual.map((level, idx) => (
-                        <article key={`individual-${level.level}-${idx}`} className="rounded-xl border border-[#e1d6c4] bg-[#fdfaf5] p-4">
-                          <h5 className="text-xl font-semibold">
-                            {level.level} - {level.title}
-                          </h5>
-                          <p className="mt-2">{level.scope}</p>
-                          <p className="mt-1 text-xs uppercase tracking-[0.06em] text-[#6a5f4f]">
-                            Typical experience: {level.typicalExperience}
-                          </p>
-                          <p className="mt-2">
-                            <span className="font-semibold">Responsibilities:</span> {level.responsibilities.join("; ")}
-                          </p>
-                          <p className="mt-1">
-                            <span className="font-semibold">Skills:</span> {level.skills.join("; ")}
-                          </p>
-                        </article>
+                        <LevelCard key={`individual-${level.level}-${idx}`} level={level} />
                       ))}
                     </div>
                   </div>
@@ -385,21 +479,7 @@ export function LadderWizard() {
                     <h5 className="font-semibold text-[#3f372b]">Managerial Track</h5>
                     <div className="mt-2 space-y-3">
                       {groupedLevels.managerial.map((level, idx) => (
-                        <article key={`managerial-${level.level}-${idx}`} className="rounded-xl border border-[#e1d6c4] bg-[#fdfaf5] p-4">
-                          <h5 className="text-xl font-semibold">
-                            {level.level} - {level.title}
-                          </h5>
-                          <p className="mt-2">{level.scope}</p>
-                          <p className="mt-1 text-xs uppercase tracking-[0.06em] text-[#6a5f4f]">
-                            Typical experience: {level.typicalExperience}
-                          </p>
-                          <p className="mt-2">
-                            <span className="font-semibold">Responsibilities:</span> {level.responsibilities.join("; ")}
-                          </p>
-                          <p className="mt-1">
-                            <span className="font-semibold">Skills:</span> {level.skills.join("; ")}
-                          </p>
-                        </article>
+                        <LevelCard key={`managerial-${level.level}-${idx}`} level={level} />
                       ))}
                     </div>
                   </div>
@@ -419,10 +499,14 @@ export function LadderWizard() {
             Next
           </Button>
           {step === 2 ? (
-            <Button type="button" onClick={(e) => {
-              setStep(1);
-              generate(e);
-            }} disabled={loading}>
+            <Button
+              type="button"
+              onClick={(e) => {
+                setStep(1);
+                generate(e);
+              }}
+              disabled={loading}
+            >
               {loading ? "Regenerating..." : "Regenerate"}
             </Button>
           ) : null}

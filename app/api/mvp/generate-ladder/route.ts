@@ -30,7 +30,15 @@ Return only valid JSON with this shape:
       "scope": "string",
       "responsibilities": ["string"],
       "skills": ["string"],
-      "typicalExperience": "string"
+      "typicalExperience": "string",
+      "competencyProgression": [
+        {
+          "competency": "string",
+          "proficiency": "string"
+        }
+      ],
+      "nextLevelReadiness": ["string"],
+      "learningPathways": ["string"]
     }
   ]
 }
@@ -44,6 +52,9 @@ Rules:
 - Respect the requested ladder boundaries from starting job level to highest job level/head of role.
 - If dualPath is "Yes", include both Individual and Managerial path levels and use the provided track-specific level lists.
 - If dualPath is "No", include only Individual path levels.
+- Skill and competency proficiency must progressively increase from lowest to highest level within each path.
+- For each level, include competencies that indicate readiness for the next level.
+- For each level, include practical learning pathways to progress to the next level.
 - Do not include markdown fences.`;
 
 function buildUserPrompt(input: LadderInput) {
@@ -60,7 +71,7 @@ function buildUserPrompt(input: LadderInput) {
 - Highest level / head of role: ${input.highestJobLevel}
 - Dual path (Individual + Managerial): ${input.dualPath}
 
-Include summary, benchmarked companies list, benchmark assumptions, and level-by-level ladder details.`;
+Include summary, benchmarked companies list, benchmark assumptions, and level-by-level ladder details with progressively increasing proficiency, next-level readiness competencies, and learning pathways.`;
 }
 
 export async function POST(request: Request) {
