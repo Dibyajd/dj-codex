@@ -7,6 +7,8 @@ type LadderInput = {
   revenueRange: string;
   functionName: string;
   role: string;
+  progressiveJobTitles: string;
+  roleContext: string;
   jobLevels: string;
   individualTrackJobLevels: string;
   managerialTrackJobLevels: string;
@@ -64,6 +66,8 @@ function buildUserPrompt(input: LadderInput) {
 - Revenue range: ${input.revenueRange}
 - Function: ${input.functionName}
 - Role: ${input.role}
+- Progressive job titles: ${input.progressiveJobTitles}
+- Role context (3-5 sentences): ${input.roleContext}
 - Job levels (single track): ${input.jobLevels}
 - Individual track job levels: ${input.individualTrackJobLevels}
 - Managerial track job levels: ${input.managerialTrackJobLevels}
@@ -91,6 +95,8 @@ export async function POST(request: Request) {
       "revenueRange",
       "functionName",
       "role",
+      "progressiveJobTitles",
+      "roleContext",
       "startingJobLevel",
       "highestJobLevel",
       "dualPath"
@@ -120,6 +126,8 @@ export async function POST(request: Request) {
       revenueRange: body.revenueRange!.trim(),
       functionName: body.functionName!.trim(),
       role: body.role!.trim(),
+      progressiveJobTitles: body.progressiveJobTitles!.trim(),
+      roleContext: body.roleContext!.trim(),
       jobLevels: body.jobLevels?.trim() || "",
       individualTrackJobLevels: body.individualTrackJobLevels?.trim() || "",
       managerialTrackJobLevels: body.managerialTrackJobLevels?.trim() || "",

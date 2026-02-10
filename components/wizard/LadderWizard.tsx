@@ -32,6 +32,8 @@ type LadderResponse = {
     revenueRange: string;
     functionName: string;
     role: string;
+    progressiveJobTitles: string;
+    roleContext: string;
     jobLevels: string;
     individualTrackJobLevels: string;
     managerialTrackJobLevels: string;
@@ -145,6 +147,9 @@ export function LadderWizard() {
     revenueRange: "$100M-$500M",
     functionName: "HR",
     role: "HR Business Partner",
+    progressiveJobTitles: "HRBP Associate, HRBP, Senior HRBP, Lead HRBP, Director HRBP",
+    roleContext:
+      "This role partners with business leaders to drive workforce planning, organization design, and talent outcomes. It balances strategic advisory and operational execution. The role influences leaders through data-backed insights and strong business acumen.",
     jobLevels: "Associate, Senior, Lead, Director",
     individualTrackJobLevels: "IC1, IC2, IC3, IC4, IC5",
     managerialTrackJobLevels: "M1, M2, M3, M4",
@@ -352,6 +357,24 @@ export function LadderWizard() {
               <Input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} required />
             </div>
             <div>
+              <FieldLabel text="Progressive Job Titles" helpId="help-progressive-titles" />
+              <Input
+                value={form.progressiveJobTitles}
+                onChange={(e) => setForm({ ...form, progressiveJobTitles: e.target.value })}
+                required
+              />
+            </div>
+            <div className="md:col-span-2">
+              <FieldLabel text="Role Context (3-5 sentences)" helpId="help-role-context" />
+              <textarea
+                className="w-full rounded-xl border border-[#d7ccba] bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-accent focus:ring-2 focus:ring-[#0e6e6325]"
+                rows={4}
+                value={form.roleContext}
+                onChange={(e) => setForm({ ...form, roleContext: e.target.value })}
+                required
+              />
+            </div>
+            <div>
               {form.dualPath === "Yes" ? (
                 <>
                   <FieldLabel text="Individual Track Job Levels" helpId="help-individual-levels" />
@@ -413,6 +436,8 @@ export function LadderWizard() {
                 <li id="help-revenue"><b>Revenue Range:</b> Select latest annual revenue band.</li>
                 <li id="help-function"><b>Function:</b> Enter business function where the ladder applies (for example, HR).</li>
                 <li id="help-role"><b>Role:</b> Enter one role family only (for example, HR Business Partner).</li>
+                <li id="help-progressive-titles"><b>Progressive Job Titles:</b> Enter comma-separated role titles in growth order (for example, HRBP Associate, HRBP, Senior HRBP, Lead HRBP).</li>
+                <li id="help-role-context"><b>Role Context:</b> Provide 3-5 sentences describing scope, business impact, key stakeholders, and expected outcomes.</li>
                 <li id="help-job-levels"><b>Job Levels:</b> Comma-separated level names from entry to top level.</li>
                 <li id="help-individual-levels"><b>Individual Track Levels:</b> Comma-separated IC levels in order (for example, IC1, IC2, IC3).</li>
                 <li id="help-managerial-levels"><b>Managerial Track Levels:</b> Comma-separated manager levels in order (for example, M1, M2, M3).</li>
